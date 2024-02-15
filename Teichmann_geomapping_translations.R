@@ -16,13 +16,81 @@ library(tidygeocoder)
 #Extract titles in translations for a list of authors in Deutsche Nationalbibliothek Datenshop and export as csv
 #Query: (spo=ger and (atr="Bachmann, Ingeborg")) or (spo=ger and (atr="Aichinger, Ilse")) or (spo=ger and (atr="Müller, Herta")) or (spo=ger and (atr="Tawada, Yoko")) or (spo=ger and (atr="Stefan, Verena")) or (spo=ger and (atr="Özdamar, Emine Sevgi"))
 #dnb_bib <- read.csv("~/DNB-German-Fiction-Translations-Catalogue-Data/Data/dnb_transdata_220523/alldnb_2023_220523.csv", sep=",")
-dnb_all_geo <- read.csv("20220614_alldnb_ch3_author_pubplace_v3.csv")
-author_data_female <- read.csv("140224_author_data_gnd_gender_femaleonly.csv",sep=",")
+dnb_all_geo <- read.csv("data/20220614_alldnb_ch3_author_pubplace_v3.csv")
+author_data_female <- read.csv("data/140224_author_data_gnd_gender_femaleonly.csv",sep=",")
 
 #subset geo by female authors only
 dnb_fem_geo <- dnb_all_geo[dnb_all_geo$author %in% author_data_female$Author, ]
 
-#map
+##data quality check with gender package e.g. robert musil appears twice (1+2)
+library(gender)
+gender("Robert", method="genderize")
+##input just takes first name. add first name to df
+author_names <- separate(dnb_fem_geo, author ,into = c("lastname", "firstname"), sep= ",")
+author_names$author <- dnb_fem_geo$author
+author_names$firstname <- trimws(author_names$firstname, which = c("both"))
+author_firstname <- unique(author_names$firstname)
+
+#predict gender
+author_names_genderpred <- gender(author_firstname, method="kantrowitz")
+
+##8 male (2 falsely: Gerrit, Gabriele)
+author_names_male <- c("Robert", "Franz", "Benjamin","Keith","Karl","Joe")
+
+##remove them
+dnb_fem_geo_nomales <- author_names[ ! author_names$firstname %in% author_names_male, ]
+
+###Statistics
+
+##gender bias
+#1 (male)    4305
+#2 (female)    1742
+# %
+1742/6047
+#28% of all authors are female!
+
+#% of titles of female authors
+nrow(dnb_fem_geo_nomales)/nrow(dnb_all_geo)
+#20.5% of 34618 titles female
+
+##which author is the most translated for titles?
+author_fem_titlefreq <- as.data.frame(table(dnb_fem_geo_nomales$author))
+
+##which author is the most translated for languages
+author_lang_group <- dnb_fem_geo_nomales %>%  
+  group_by(author) %>%
+  summarise(lang_freq = n_distinct(language))
+
+##Create language per author contingency table
+# author_lang_freq <- dnb_fem_geo %>% 
+#   count(language, author) %>% 
+#   pivot_wider(names_from = language, values_from = n, values_fill = list(n = 0))
+
+##which author is the most distributed across publishing places?
+author_place_group <- dnb_fem_geo_nomales %>%  
+  group_by(author) %>%
+  summarise(place_freq = n_distinct(place))
+
+##combine title_freq, lang_freq, place_freq in one table
+
+author_freqs <- author_fem_titlefreq
+colnames(author_freqs)[1] <- "author"
+colnames(author_freqs)[2] <- "title_freq"
+author_freqs$lang_freq <- author_lang_group$lang_freq
+author_freqs$place_freq <- author_place_group$place_freq
+
+##export
+
+write.csv(dnb_fem_geo_nomales, file="results/150224_author_data_gnd_gender_femaleonly_geo.csv")
+write.csv(author_freqs, file="results/150224_author_data_gnd_gender_femaleonly_geo_freqs.csv")
+
+##Visualize "the most translated" women writers
+##barplot, correlation plot, 3d plot (?)
+
+##which author has the widest geographic reach outside of europe?
+
+###Geomapping
+
 pal <- colorFactor(
   palette = 'Dark2',
   domain = dnb_fem_geo$language
@@ -39,15 +107,6 @@ leaflet(dnb_fem_geo) %>%
                "<strong> Translated Title: </strong>", title, "<br>"), 
              color = ~pal(language)) %>% 
   addLegend(pal = pal, values = ~language, group = "circles", position = "topright")
-
-
-##Create language per author contingency table
-author_lang_freq <- dnb_fem_geo %>% 
-  count(language, author) %>% 
-  pivot_wider(names_from = language, values_from = n, values_fill = list(n = 0))
-
-##which author has most languages?
-
 
 
 #Distribution of country codes
