@@ -104,15 +104,48 @@ nrow(author_freqs[author_freqs$lang_freq==1, ])/nrow(author_freqs)
 ##64% only one translated title!!
 
 ##Visualize "the most translated" 20 writers
-##barplot, correlation plot, 3D plot (?)
 
-author_freqs_melt<-melt(author_freqs, id.vars="author")
-author_freqs_melt %>% 
-  arrange(desc(value)) %>%
-  slice(1:20) %>% 
-  ggplot(aes(x=author, y=value, fill=variable)) + geom_bar(stat='identity')
+author_freqs %>% 
+  arrange(desc(title_freq)) %>%
+  slice(1:20) %>%
+  pivot_longer(!author, names_to = "type", values_to = "freqs") %>% 
+  ggplot(aes(x = reorder(author, -freqs), y = freqs, fill=type)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=45, hjust=1))
 
-##pivotlonger
+
+##boxplot
+
+# author_freqs %>% 
+#   arrange(desc(title_freq)) %>%
+#   slice(1:20) %>%
+#   pivot_longer(!author, names_to = "type", values_to = "freqs") %>% 
+# ggplot(aes(x = reorder(author, -freqs), y=freqs)) + 
+#   geom_boxplot()
+
+##correlation
+cor(author_freqs[, c('title_freq','lang_freq','place_freq')])
+#title and lang or place lower correlation. It is not significantly more likely that an author with increased titles also has increase lang and places
+
+##LM model to see which authors are unexpected (lowest correlation between lang_freq and title_freq)
+#fit model
+author_freq_model <- lm(title_freq ~ lang_freq, data=author_freqs)
+
+#view model summary
+summary(author_freq_model) 
+
+#calculate the standardized residuals
+standard_res <- rstandard(author_freq_model)
+
+#view the standardized residuals
+standard_res
+
+#column bind standardized residuals back to original data frame
+author_freq_res <- cbind(author_freqs, standard_res)
+
+#plot predictor variable vs. standardized residuals
+plot(author_freq_res$author, standard_res, ylab='Standardized Residuals', xlab='x') 
+
+#add horizontal line at 0
+abline(0, 0)
 
 ##which author has the widest geographic reach outside of europe?
 
