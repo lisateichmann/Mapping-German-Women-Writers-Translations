@@ -84,8 +84,35 @@ author_freqs$place_freq <- author_place_group$place_freq
 write.csv(dnb_fem_geo_nomales, file="results/150224_author_data_gnd_gender_femaleonly_geo.csv")
 write.csv(author_freqs, file="results/150224_author_data_gnd_gender_femaleonly_geo_freqs.csv")
 
-##Visualize "the most translated" women writers
-##barplot, correlation plot, 3d plot (?)
+## Statistics
+summary(author_freqs)
+
+##% of authors with <5 titles, mean==5.87
+nrow(author_freqs[author_freqs$title_freq<5, ])/nrow(author_freqs)
+#79% of authors have less than 5 titles, meaning that 20% of authors are frequently translated
+
+##% of authors with <5 languages, mean==2.73 (even fewer!)
+nrow(author_freqs[author_freqs$lang_freq<5, ])/nrow(author_freqs)
+#85% of authors have less than 5 titles, meaning that 15% of authors are translated into many languages, only 18 of which >20 languages
+
+##% of authors with <5 places, mean==3.15
+nrow(author_freqs[author_freqs$place_freq<5, ])/nrow(author_freqs)
+#85% of authors have less than 5 titles, meaning that 15% of authors are frequently translated
+
+##long tail
+nrow(author_freqs[author_freqs$lang_freq==1, ])/nrow(author_freqs)
+##64% only one translated title!!
+
+##Visualize "the most translated" 20 writers
+##barplot, correlation plot, 3D plot (?)
+
+author_freqs_melt<-melt(author_freqs, id.vars="author")
+author_freqs_melt %>% 
+  arrange(desc(value)) %>%
+  slice(1:20) %>% 
+  ggplot(aes(x=author, y=value, fill=variable)) + geom_bar(stat='identity')
+
+##pivotlonger
 
 ##which author has the widest geographic reach outside of europe?
 
