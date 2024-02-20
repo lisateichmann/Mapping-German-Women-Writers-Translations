@@ -12,6 +12,7 @@ library(tidyr)
 library(stringr)
 library(leaflet)
 library(tidygeocoder)
+library(ggrepel)
 
 #Extract titles in translations for a list of authors in Deutsche Nationalbibliothek Datenshop and export as csv
 #Query: (spo=ger and (atr="Bachmann, Ingeborg")) or (spo=ger and (atr="Aichinger, Ilse")) or (spo=ger and (atr="Müller, Herta")) or (spo=ger and (atr="Tawada, Yoko")) or (spo=ger and (atr="Stefan, Verena")) or (spo=ger and (atr="Özdamar, Emine Sevgi"))
@@ -111,6 +112,7 @@ author_freqs %>%
   pivot_longer(!author, names_to = "type", values_to = "freqs") %>% 
   ggplot(aes(x = reorder(author, -freqs), y = freqs, fill=type)) + geom_bar(stat='identity') + theme(axis.text.x=element_text(angle=45, hjust=1))
 
+ggsave("figures/200224_author_data_gnd_female_freqs_barchart.png", width = 6, height = 4, dpi=300)
 
 ##boxplot
 
@@ -127,7 +129,7 @@ cor(author_freqs[, c('title_freq','lang_freq','place_freq')])
 
 ##LM model to see which authors are unexpected (lowest correlation between lang_freq and title_freq)
 #fit model
-author_freq_model <- lm(title_freq ~ lang_freq, data=author_freqs)
+author_freq_model <- lm(title_freq ~ place_freq, data=author_freqs)
 
 #view model summary
 summary(author_freq_model) 
@@ -141,11 +143,47 @@ standard_res
 #column bind standardized residuals back to original data frame
 author_freq_res <- cbind(author_freqs, standard_res)
 
-#plot predictor variable vs. standardized residuals
-plot(author_freq_res$author, standard_res, ylab='Standardized Residuals', xlab='x') 
+#filter unusual authors that have residuals of less than -2 and more than 2
+author_freq_res_outliers <- author_freq_res  %>% filter(standard_res < -2  | standard_res > 2)
 
-#add horizontal line at 0
-abline(0, 0)
+#plot predictor variable vs. standardized residuals
+author_freq_res_outliers %>% ggplot(aes(x = reorder(author, -standard_res), y = standard_res)) + theme(axis.text.x=element_text(angle=45, hjust=1)) + geom_point()
+
+ggsave("figures/200224_author_data_gnd_female_freqs_outliers.png", width = 6, height = 4, dpi=300)
+write.csv(author_freq_res_outliers, file="results/150224_author_data_gnd_gender_outliers.csv")
+
+##Plot title and language frequencies for these authors to see which ones stand out
+ggplot(author_freq_res_outliers, aes(place_freq, title_freq)) + geom_point()+ ggtitle("Title and publishing place frequencies of authors with residuals of >2 and <-2") +
+  labs(x = "Publishing places", y = "Titles") + geom_smooth(method="lm") + theme_bw() + geom_text_repel(aes(label=author), max.overlaps=20)
+  
+ggsave("figures/200224_author_data_gnd_female_freqs_outliers.png", width = 10, height = 4, dpi=300)
+
+##Map outliers
+
+#append coordinates to author_freq_res_outliers
+author_freq_res_outliers_geo <- merge(author_freq_res_outliers,dnb_fem_geo_nomales, by  = "author") 
+author_freq_res_outliers_geo <- author_freq_res_outliers_geo[order(author_freq_res_outliers_geo$place_freq, author_freq_res_outliers_geo$place_freq),]
+
+#map: colors for authors in groups depending on tresholds: >100 titles, 50-100, <50 and radius ==titles
+pal <- colorFactor(
+  palette = 'Paired',
+  domain = author_freq_res_outliers_geo$author,
+  ordered=FALSE
+)
+
+leaflet(author_freq_res_outliers_geo) %>%
+  addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 5,
+             popup= ~paste(
+               "<strong> Author: </strong>", author, "<br>",
+               "<strong> Language: </strong>", language, "<br>",
+               "<strong> Publisher: </strong>", publisher, "<br>",
+               "<strong> Original Title: </strong>", uniform.title, "<br>",
+               "<strong> Translated Title: </strong>", title, "<br>"), 
+             color = ~pal(author),
+             radius = author_freq_res_outliers_geo$place_freq/100) %>% 
+  addLegend(pal = pal, values = ~author, group = "circles", position = "topright")
+
 
 ##which author has the widest geographic reach outside of europe?
 
