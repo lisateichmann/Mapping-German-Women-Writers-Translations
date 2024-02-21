@@ -158,6 +158,27 @@ ggplot(author_freq_res_outliers, aes(place_freq, title_freq)) + geom_point()+ gg
   
 ggsave("figures/200224_author_data_gnd_female_freqs_outliers.png", width = 10, height = 4, dpi=300)
 
+##Investigate outliers
+author_freq_res_outliers_geo %>% 
+     filter(str_detect(author,"Courths-Mahler"))  %>% 
+     group_by(language) %>% 
+    tally()
+
+author_freq_res_outliers_geo %>% 
+  filter(str_detect(author,"Courths-Mahler"))  %>% 
+  group_by(place) %>% 
+  tally()
+
+View(author_freq_res_outliers_geo %>% 
+  filter(str_detect(author,"Jelinek"))  %>% 
+  group_by(language) %>% 
+  tally())
+
+View(author_freq_res_outliers_geo %>% 
+  filter(str_detect(author,"Jelinek"))  %>% 
+  group_by(place) %>% 
+  tally())
+
 ##Map outliers
 
 #append coordinates to author_freq_res_outliers
