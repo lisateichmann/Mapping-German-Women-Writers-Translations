@@ -85,25 +85,6 @@ author_freqs$place_freq <- author_place_group$place_freq
 write.csv(dnb_fem_geo_nomales, file="results/150224_author_data_gnd_gender_femaleonly_geo.csv")
 write.csv(author_freqs, file="results/150224_author_data_gnd_gender_femaleonly_geo_freqs.csv")
 
-## Statistics
-summary(author_freqs)
-
-##% of authors with <5 titles, mean==5.87
-nrow(author_freqs[author_freqs$title_freq<5, ])/nrow(author_freqs)
-#79% of authors have less than 5 titles, meaning that 20% of authors are frequently translated
-
-##% of authors with <5 languages, mean==2.73 (even fewer!)
-nrow(author_freqs[author_freqs$lang_freq<5, ])/nrow(author_freqs)
-#85% of authors have less than 5 titles, meaning that 15% of authors are translated into many languages, only 18 of which >20 languages
-
-##% of authors with <5 places, mean==3.15
-nrow(author_freqs[author_freqs$place_freq<5, ])/nrow(author_freqs)
-#85% of authors have less than 5 titles, meaning that 15% of authors are frequently translated
-
-##long tail
-nrow(author_freqs[author_freqs$lang_freq==1, ])/nrow(author_freqs)
-##64% only one translated title!!
-
 ##Visualize "the most translated" 20 writers
 
 author_freqs %>% 
@@ -179,6 +160,32 @@ View(author_freq_res_outliers_geo %>%
   group_by(place) %>% 
   tally())
 
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Link"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Link"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Link")))
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Neuhaus"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Neuhaus"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Neuhaus")))
+
 ##Map outliers
 
 #append coordinates to author_freq_res_outliers
@@ -205,8 +212,87 @@ leaflet(author_freq_res_outliers_geo) %>%
              radius = author_freq_res_outliers_geo$place_freq/100) %>% 
   addLegend(pal = pal, values = ~author, group = "circles", position = "topright")
 
+#only keep authors with >100 titles
+author_cases_100plus <- author_freq_res_outliers_geo[author_freq_res_outliers_geo$title_freq>100, ]
+
+pal <- colorFactor(
+  palette = 'Dark2',
+  domain = author_cases_100plus$author,
+  ordered=FALSE
+)
+
+leaflet(author_cases_100plus) %>%
+  addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 5,
+             popup= ~paste(
+               "<strong> Author: </strong>", author, "<br>",
+               "<strong> Language: </strong>", language, "<br>",
+               "<strong> Publisher: </strong>", publisher, "<br>",
+               "<strong> Original Title: </strong>", uniform.title, "<br>",
+               "<strong> Translated Title: </strong>", title, "<br>"), 
+             color = ~pal(author),
+             radius = author_cases_100plus$place_freq/100) %>% 
+  addLegend(pal = pal, values = ~author, group = "circles", position = "topright")
+
+###Mapping all authors
+
+##Eurocentrism
+##inside vs. outside europe
+dnb_fem_geo_european <- dnb_fem_geo_nomales %>% mutate(newcol = ifelse(str_detect(country, "^XA"), "European", "Non-European"))
+#remove rows with missing place
+dnb_fem_geo_european <- dnb_fem_geo_european %>% filter(!dnb_fem_geo_european$place=="")
+##titles for european vs non-european
+table(dnb_fem_geo_european$newcol)
+
+##publishing centres
+leaflet() %>%
+  addTiles() %>% 
+  addMarkers(data = dnb_fem_geo_nomales, 
+             popup=~place,
+             clusterOptions = markerClusterOptions())
+
+pub_places_freq <- as.data.frame(table(dnb_fem_geo_nomales$place))
+
+write.csv(pub_places_freq, "results/110324_author_data_gnd_gender_femaleonly_geo_pubplace_freqs.csv")
 
 ##which author has the widest geographic reach outside of europe?
+dnb_fem_geo_noneuropean <- dnb_fem_geo_european %>% filter(dnb_fem_geo_european$newcol=="Non-European")
+View(table(dnb_fem_geo_noneuropean$author))
+
+write.csv((table(dnb_fem_geo_noneuropean$author)), "results/110324_author_data_gnd_gender_femaleonly_geo_noneuropean.csv")
+
+##The least translated authors
+summary(author_freqs)
+
+##% of authors with <5 titles, mean==5.87
+nrow(author_freqs[author_freqs$title_freq<5, ])/nrow(author_freqs)
+#79% of authors have less than 5 titles, meaning that 20% of authors are frequently translated
+
+##% of authors with <5 languages, mean==2.73 (even fewer!)
+nrow(author_freqs[author_freqs$lang_freq<5, ])/nrow(author_freqs)
+#85% of authors have less than 5 titles, meaning that 15% of authors are translated into many languages, only 18 of which >20 languages
+
+##% of authors with <5 places, mean==3.15
+nrow(author_freqs[author_freqs$place_freq<5, ])/nrow(author_freqs)
+#85% of authors have less than 5 titles, meaning that 15% of authors are frequently translated
+
+##long tail
+nrow(author_freqs[author_freqs$lang_freq==1, ])/nrow(author_freqs)
+##64% only one translated title!!
+
+##Publishing places of least translated
+least_translated <- author_freqs[author_freqs$place_freq==1, ]
+#append geo
+least_translated_geo <- dnb_fem_geo_nomales[dnb_fem_geo_nomales$author %in% least_translated$author, ]
+
+##bubble map of literary centres
+leaflet() %>%
+  addTiles() %>% 
+  addMarkers(data = least_translated_geo, 
+                   popup=~place,
+             clusterOptions = markerClusterOptions())
+
+######archive#######
 
 ###Geomapping
 
