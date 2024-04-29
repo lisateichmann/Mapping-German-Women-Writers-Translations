@@ -7,7 +7,9 @@ In the webinar I wish to explore women writer’s translational trajectories dra
 
 The data has been extracted from the German National Library's Datenshop using the following search query: spo=ger and (sgt=59 or sgt=B) and (jhr=1980) It also contains datasets that have been extracted on different dates from the library catalogue using the same search query.
 
-For the full dataset see: 
+For each author the GND (Gemeinsame Normdatei) authority files have been extracted.
+
+For an analysis of the source dataset see: Teichmann, Lisa. “Mapping German Fiction in Translation in the German National Library Catalogue (1980-2020),” 2023. https://escholarship.mcgill.ca/concern/theses/0p096d03z?locale=en.
 
 # Folders
 
