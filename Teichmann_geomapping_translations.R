@@ -54,6 +54,33 @@ dnb_fem_geo_nomales <- author_names[ ! author_names$firstname %in% author_names_
 nrow(dnb_fem_geo_nomales)/nrow(dnb_all_geo)
 #20.5% of 34618 titles female
 
+## Percentages of female authors per year
+#Did it get better after 2014?
+dnb_all_year_freq <- as.data.frame(table(dnb_all_geo$year))
+dnb_all_year_freq = dnb_all_year_freq[-1,]
+dnb_fem_year_freq <- as.data.frame(table(dnb_fem_geo_nomales$year))
+
+colnames(dnb_all_year_freq)[2] <- "all_freq"
+colnames(dnb_fem_year_freq)[2] <- "female_freq"
+
+dnb_gap_year <- cbind(dnb_all_year_freq, dnb_fem_year_freq)
+dnb_gap_year$Var1 <- NULL
+
+dnb_gap_year<- dnb_gap_year %>% mutate(
+           perc=(female_freq/all_freq)*100) 
+
+##Plot
+
+ggplot(dnb_gap_year, aes(x=Var1, y=perc)) + 
+  geom_bar(stat="identity", fill = "darkolivegreen4") + xlab("Year") + ylab("Percentage of female authors") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + theme(axis.text.x=element_text(angle=45, hjust=1))
+
+ggsave("figures/200224_author_data_gnd_gendergap_percentages_peryear.png", width = 6, height = 4, dpi=300)
+
+
+##make a new column with percentages
+
+
 ##which author is the most translated for titles?
 author_fem_titlefreq <- as.data.frame(table(dnb_fem_geo_nomales$author))
 
@@ -140,6 +167,14 @@ ggplot(author_freq_res_outliers, aes(place_freq, title_freq)) + geom_point()+ gg
 ggsave("figures/200224_author_data_gnd_female_freqs_outliers.png", width = 10, height = 4, dpi=300)
 
 ##Investigate outliers
+
+##clean uniform.title
+##keep everything before "<"
+author_freq_res_outliers_geo$uniform.title <- str_extract(author_freq_res_outliers_geo$uniform.title, ".*?(?= <)")
+dnb_fem_geo_nomales$uniform.title <- str_extract(dnb_fem_geo_nomales$uniform.title, ".*?(?= <)")
+
+dnb_fem_geo_nomales
+
 author_freq_res_outliers_geo %>% 
      filter(str_detect(author,"Courths-Mahler"))  %>% 
      group_by(language) %>% 
@@ -151,6 +186,11 @@ author_freq_res_outliers_geo %>%
   tally()
 
 View(author_freq_res_outliers_geo %>% 
+  filter(str_detect(author,"Courths-Mahler"))  %>% 
+  group_by(uniform.title) %>% 
+  tally())
+
+View(author_freq_res_outliers_geo %>% 
   filter(str_detect(author,"Jelinek"))  %>% 
   group_by(language) %>% 
   tally())
@@ -159,6 +199,22 @@ View(author_freq_res_outliers_geo %>%
   filter(str_detect(author,"Jelinek"))  %>% 
   group_by(place) %>% 
   tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Jelinek"))  %>% 
+       group_by(uniform.title) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(uniform.title,"Die Klavierspielerin"))  %>% 
+       group_by(year) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Jelinek")) %>% 
+       filter(str_detect(uniform.title,"Die Liebhaberinnen"))  %>% 
+       group_by(year) %>% 
+       tally())
 
 View(author_freq_res_outliers_geo %>% 
        filter(str_detect(author,"Link"))  %>% 
@@ -174,6 +230,17 @@ View(author_freq_res_outliers_geo %>%
        filter(str_detect(author,"Link")))
 
 View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Link"))  %>% 
+       group_by(uniform.title) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(uniform.title,"Das andere Kind"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+
+View(author_freq_res_outliers_geo %>% 
        filter(str_detect(author,"Neuhaus"))  %>% 
        group_by(language) %>% 
        tally())
@@ -185,6 +252,56 @@ View(author_freq_res_outliers_geo %>%
 
 View(author_freq_res_outliers_geo %>% 
        filter(str_detect(author,"Neuhaus")))
+
+View(dnb_fem_geo_nomales %>% 
+  filter(str_detect(author,"Wolf, Christa"))  %>% 
+  group_by(language) %>% 
+  tally())
+
+View(dnb_fem_geo_nomales %>% 
+  filter(str_detect(author,"Wolf, Christa"))  %>% 
+  group_by(place) %>% 
+  tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Wolf, Christa"))  %>% 
+       group_by(uniform.title) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Medea"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Lark, Sarah"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Lark, Sarah"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Lark, Sarah"))  %>% 
+       group_by(uniform.title) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Medea"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+###String detect uniform.title by matching
+
+uniform.title <- c(unique(dnb_fem_geo_nomales$uniform.title))
+uniform.title_regex <- paste0(uniform.title, collapse="|")
+dnb_fem_geo_nomales$uniform.title_regex <- str_extract_all(dnb_fem_geo_nomales$uniform.title, uniform.title_regex)
+##append to imprint_place
+dnb_fem_geo_nomales<- dnb_fem_geo_nomales %>% 
+  mutate(uniform.title = coalesce(uniform.title, uniform.title_regex))
+
 
 ##Map outliers
 
