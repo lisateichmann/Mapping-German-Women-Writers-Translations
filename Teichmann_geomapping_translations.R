@@ -253,6 +253,42 @@ View(author_freq_res_outliers_geo %>%
 View(author_freq_res_outliers_geo %>% 
        filter(str_detect(author,"Neuhaus")))
 
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(uniform.title,"Schneewittchen muss sterben"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Bachmann"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Bachmann"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Malina"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Malina")))
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Neuhaus"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(author,"Neuhaus")))
+
+View(author_freq_res_outliers_geo %>% 
+       filter(str_detect(uniform.title,"Schneewittchen muss sterben"))  %>% 
+       group_by(place) %>% 
+       tally())
+
 View(dnb_fem_geo_nomales %>% 
   filter(str_detect(author,"Wolf, Christa"))  %>% 
   group_by(language) %>% 
@@ -289,8 +325,28 @@ View(dnb_fem_geo_nomales %>%
        tally())
 
 View(dnb_fem_geo_nomales %>% 
-       filter(str_detect(uniform.title,"Medea"))  %>% 
+       filter(str_detect(author,"Zeh, Juli"))  %>% 
        group_by(language) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Zeh, Juli"))  %>% 
+       group_by(place) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(author,"Zeh, Juli"))  %>% 
+       group_by(uniform.title) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Adler und Engel"))  %>% 
+       group_by(language) %>% 
+       tally())
+
+View(dnb_fem_geo_nomales %>% 
+       filter(str_detect(uniform.title,"Die Mittagsfrau"))  %>% 
+       group_by(place) %>% 
        tally())
 
 ###String detect uniform.title by matching
