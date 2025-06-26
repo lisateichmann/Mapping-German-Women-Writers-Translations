@@ -112,6 +112,16 @@ author_freqs$place_freq <- author_place_group$place_freq
 write.csv(dnb_fem_geo_nomales, file="results/150224_author_data_gnd_gender_femaleonly_geo.csv")
 write.csv(author_freqs, file="results/150224_author_data_gnd_gender_femaleonly_geo_freqs.csv")
 
+## percentage of titles by most translated 20 writers
+author_freqs_top20 <- author_freqs %>% 
+  arrange(desc(title_freq)) %>%
+  slice(1:20)
+
+write.csv(author_freqs_top20, file="results/150224_author_data_gnd_gender_top20authors.csv")
+
+sum(author_freqs_top20$title_freq)/nrow(dnb_fem_geo_nomales)
+#0.3522455
+
 ##Visualize "the most translated" 20 writers
 
 author_freqs %>% 
@@ -427,6 +437,18 @@ leaflet() %>%
 pub_places_freq <- as.data.frame(table(dnb_fem_geo_nomales$place))
 
 write.csv(pub_places_freq, "results/110324_author_data_gnd_gender_femaleonly_geo_pubplace_freqs.csv")
+
+##compare top publishing places female vs male
+pub_places_freq_fvsm <- as.data.frame(table(dnb_all_geo$place))
+pub_places_freq_fvsm <- merge(pub_places_freq_fvsm, pub_places_freq, by="Var1")
+names(pub_places_freq_fvsm)[2] <- "place_freq_all"
+names(pub_places_freq_fvsm)[3] <- "place_freq_f"
+
+pub_places_freq_fvsm <- pub_places_freq_fvsm %>% mutate(perc = place_freq_f/place_freq_all*100)
+
+write.csv(pub_places_freq_fvsm, "results/110324_author_data_gnd_gender_malevsfem_geo_pubplace_freqs.csv")
+
+##add %
 
 ##which author has the widest geographic reach outside of europe?
 dnb_fem_geo_noneuropean <- dnb_fem_geo_european %>% filter(dnb_fem_geo_european$newcol=="Non-European")
