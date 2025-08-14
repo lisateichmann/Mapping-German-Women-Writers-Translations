@@ -54,7 +54,7 @@ dnb_fem_geo_nomales <- author_names[ ! author_names$firstname %in% author_names_
 nrow(dnb_fem_geo_nomales)/nrow(dnb_all_geo)
 #20.5% of 34618 titles female
 
-## Percentages of female authors per year
+## Percentages of titles by female authors per year
 #Did it get better after 2014?
 dnb_all_year_freq <- as.data.frame(table(dnb_all_geo$year))
 dnb_all_year_freq = dnb_all_year_freq[-1,]
@@ -73,7 +73,7 @@ dnb_gap_year<- dnb_gap_year %>% mutate(
 
 ggplot(dnb_gap_year, aes(x=Var1, y=perc)) + 
   geom_bar(stat="identity", fill = "darkolivegreen4") + xlab("Year") + ylab("Percentage of female authors") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + theme(axis.text.x=element_text(angle=45, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + theme(axis.text.x=element_text(angle=45, hjust=0.5))
 
 ggsave("figures/200224_author_data_gnd_gendergap_percentages_peryear.png", width = 6, height = 4, dpi=300)
 
